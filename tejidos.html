@@ -36,10 +36,10 @@
     .btn-secondary { background: #ddd; color: #333; }
     .btn-secondary:hover { background: #bbb; }
     
-    .message { padding: 15px; border-radius: 4px; margin-bottom: 20px; }
-    .message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-    .message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-    .message.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    .message { padding: 15px; border-radius: 4px; margin-bottom: 20px; display: none; }
+    .message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; display: block; }
+    .message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; display: block; }
+    .message.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; display: block; }
     
     .loading { color: #666; font-style: italic; }
   </style>
@@ -140,29 +140,27 @@
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-4AtOnMo-ymxPH9kixVscHW1gOAA2fJWlsdKDTVVgL1r8M6dutZV681xeo41YfjE/exec";
     let data = {};
     
-    // Cargar datos al inicio
     async function cargarDatos() {
       try {
         const response = await fetch(APPS_SCRIPT_URL, {
           method: "POST",
-          body: JSON.stringify({ action: "loadAllData" })
+          body: JSON.stringify({ action: "loadAllData" }),
+          mode: "no-cors"
         });
+        
         const json = await response.json();
         data = json;
-        console.log("Datos cargados:", data);
+        console.log("✓ Datos cargados:", data);
         
-        // Poblar selects
         poblarSelect("articulo", data.articulos || []);
         poblarSelect("etapa", data.etapas || []);
         poblarSelect("taller", data.talleres || []);
         poblarSelect("responsable", data.responsables || []);
-        
-        // Crear inputs para talles
         crearInputsTalles(data.talles || []);
         
-        // Establecer fecha de hoy
         document.getElementById("fechaIngreso").valueAsDate = new Date();
       } catch (error) {
+        console.error("Error cargando datos:", error);
         mostrarMensaje("Error al cargar datos: " + error.message, "error");
       }
     }
@@ -201,10 +199,12 @@
       try {
         const response = await fetch(APPS_SCRIPT_URL, {
           method: "POST",
-          body: JSON.stringify({ action: "getColoresPorArticulo", articulo: articulo })
+          body: JSON.stringify({ action: "getColoresPorArticulo", articulo: articulo }),
+          mode: "no-cors"
         });
+        
         const json = await response.json();
-        console.log("Colores recibidos para " + articulo + ":", json);
+        console.log("✓ Colores para " + articulo + ":", json);
         
         if (json.colores && json.colores.length > 0) {
           json.colores.forEach(col => {
@@ -220,6 +220,7 @@
           colorSelect.appendChild(option);
         }
       } catch (error) {
+        console.error("Error cargando colores:", error);
         mostrarMensaje("Error al cargar colores: " + error.message, "error");
       }
     }
@@ -268,7 +269,8 @@
               articulo, color, opMadre, codigoLinea, etapa, taller,
               fechaIngreso, unidIngreso, responsable, observaciones
             }
-          })
+          }),
+          mode: "no-cors"
         });
         
         const json = await response.json();
@@ -301,6 +303,7 @@
       const messageDiv = document.getElementById("message");
       messageDiv.className = `message ${tipo}`;
       messageDiv.textContent = texto;
+      if (tipo !== "success") return;
       setTimeout(() => { messageDiv.innerHTML = ""; }, 5000);
     }
     
@@ -311,7 +314,6 @@
       event.target.classList.add("active");
     }
     
-    // Inicializar
     cargarDatos();
   </script>
 </body>
