@@ -249,9 +249,11 @@ document.addEventListener('DOMContentLoaded', () => {
       generarTalles();
       updateStatus('ready');
     })
-    .catch(e => {
-      showToast('Error de conexión', 'error');
-      updateStatus('error');
+   .catch(e => {
+  showToast('Error: ' + e.message, 'error');
+  updateStatus('error');
+  console.error(e);
+});
     });
 });
 
