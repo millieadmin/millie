@@ -2748,8 +2748,19 @@ async function guardarCierreCaja(){
     if(usar === 'conteo'){
       sfEfectivoOverride = Number(conteoEfectivo);
     }
-    // Si usar === 'teorico', sfEfectivoOverride queda null y el backend calcula normal
   }
+
+  // Calcular totales desde el STATE (evita que el backend relea el Sheet)
+  const cobranzasDia = STATE.cobranzas.filter(c => c.fecha === fecha);
+  const movimientosDia = STATE.movimientos.filter(m => m.fecha && m.fecha.slice(0,10) === fecha);
+
+  const cobrPesos = cobranzasDia.reduce((a,c) => a + c.efectoEfectivo, 0);
+  const cobrUsd = cobranzasDia.reduce((a,c) => a + c.efectoDolares, 0);
+  const cobrChq = cobranzasDia.reduce((a,c) => a + c.efectoCheques, 0);
+  const canjeChq = cobranzasDia.filter(c => c.tipo === 'Canje').reduce((a,c) => a + c.monto, 0);
+  const canjeUsdPesos = cobranzasDia.filter(c => c.tipo === 'CanjeUSD').reduce((a,c) => a + (Number(c['CANJE $'])||0), 0);
+  const gastosPesos = movimientosDia.reduce((a,m) => a + m.efectivo, 0);
+  const gastosChq = movimientosDia.reduce((a,m) => a + m.cheque, 0);
 
   const payload = {
     fecha,
@@ -2762,7 +2773,9 @@ async function guardarCierreCaja(){
     retiroEfectivo: getInputRawValue('c_retiroEfectivo') || '',
     retiroDolares: getInputRawValue('c_retiroDolares') || '',
     sfEfectivoOverride: sfEfectivoOverride,
-    diferenciaNota: diferenciaNota
+    diferenciaNota: diferenciaNota,
+    // Totales pre-calculados para que el backend no relea el Sheet
+    cobrPesos, cobrUsd, cobrChq, canjeChq, gastosPesos, gastosChq
   };
 
   setSync('syncing');
